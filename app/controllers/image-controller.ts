@@ -56,9 +56,9 @@ export class Routes {
                     const data = col.insert(imageMeta);
                     var imageUrl: string = req.protocol + "://" + req.get('host') + req.originalUrl + "/" + data.$loki;
                     imageMeta.url = imageUrl;
-                    imageMeta.id = data.$loki;
-
+                    imageMeta.id = data.$loki;                    
                     db.saveDatabase();
+                    console.log(imageMeta);
                     res.send(imageMeta);
                 } catch (err) {
                     console.log(err);
