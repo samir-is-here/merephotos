@@ -1,0 +1,121 @@
+swagger: '2.0'
+info:
+  description: >-
+    This is an image sharing server. It provides services like
+    uploading/downloading/deleting individual images, getting list of metadata
+    of all the images on the server
+  version: 0.0.1
+  title: Image Sharing Server
+  contact:
+    email: samir.shah.b@gmail.com
+host: localhost:3000
+basePath: /
+tags:
+  - name: images
+    description: Share your images with the world
+schemes:
+  - http
+paths:
+  /images:
+    post:
+      tags:
+        - images
+      summary: Add a new image to the server
+      description: This service allows to upload an image to the server
+      operationId: upload
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: title
+          in: formData
+          description: title of the image
+          required: true
+          type: string
+        - name: imageFile
+          in: formData
+          description: image file to upload
+          required: true
+          type: file
+      responses:
+        '400':
+          description: invalid file type - only images are supported
+    get:
+      tags:
+        - images
+      summary: Retrieve metadata of all the images on the server
+      description: returns images information
+      operationId: getImages
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ImageMeta'
+  '/images/{id}':
+    get:
+      tags:
+        - images
+      summary: Download an image by ID
+      description: Sends the original file that was uploaded
+      operationId: getImageById
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: id
+          in: path
+          description: ID of the image to download
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/ImageMeta'
+        '404':
+          description: Image not found
+    delete:
+      tags:
+        - images
+      summary: Delete image by ID
+      description: ''
+      operationId: deleteImage
+      parameters:
+        - name: id
+          in: path
+          description: Image id to delete
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '204':
+          description: Image was deleted successfully
+        '404':
+          description: Image not found
+definitions:
+  ImageMeta:
+    type: object
+    properties:
+      _id:
+        type: integer
+        format: int64
+      _timestamp:
+        type: string
+        format: date-time
+      _url:
+        type: string
+        format: url
+        description: This URL can be used to download or delete the individual image
+      $loki:
+        type: integer
+        format: int64
+      _file:
+        type: object
+        description: original image file details
+      meta:
+        type: object
