@@ -5,7 +5,7 @@
 #### To Build and Run the project
 - Download Node package manager for your OS - [link](https://nodejs.org/en/download/)
 - Download and unpack the code repository in an empty directory
-- Goto base directory which has pacakage.json file
+- Goto base directory which has package.json file
 - Run commands: 
     1. `npm install` - to install all the node dependencies
     2. `npm run prod` - to build and run the server
