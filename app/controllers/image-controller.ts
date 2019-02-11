@@ -1,10 +1,12 @@
 import { Request, Response, response } from "express";
 import * as fs from 'fs';
 import { ImageMeta } from '../models/image-model';
-import { db, filepathcreater, loadCollection, upload } from '../utils/dbutils';
+import { db, filepathcreater, loadCollection, upload, commdb } from '../utils/dbutils';
+import { Comments } from "../models/comments-model";
 
 
 const COLLECTION_NAME = 'images';
+const COMMENTS_COL_NAME = 'comments';
 
 
 export class Routes {
@@ -50,13 +52,13 @@ export class Routes {
 
                     console.log("file uploaded : " + req.file.filename);
 
-                    var imageMeta: ImageMeta = new ImageMeta(req.get('title'), new Date(), req.file);
+                    var imageMeta: ImageMeta = new ImageMeta(req.body.title, req.body.user, new Date(), req.file);
 
                     const col = await loadCollection(COLLECTION_NAME, db);
                     const data = col.insert(imageMeta);
                     var imageUrl: string = req.protocol + "://" + req.get('host') + req.originalUrl + "/" + data.$loki;
                     imageMeta.url = imageUrl;
-                    imageMeta.id = data.$loki;                    
+                    imageMeta.id = data.$loki;
                     db.saveDatabase();
                     console.log(imageMeta);
                     res.send(imageMeta);
@@ -98,7 +100,7 @@ export class Routes {
             .get(async (req: Request, res: Response) => {
                 try {
                     const col = await loadCollection(COLLECTION_NAME, db);
-                    const result = col.get(req.params.id);                    
+                    const result = col.get(req.params.id);
 
                     if (!result) {
                         res.sendStatus(404);
@@ -126,6 +128,16 @@ export class Routes {
                         return;
                     };
 
+                    var inputuser = req.query.user;
+
+                    console.log("input user : " + inputuser);
+                    console.log("result : " + result.user);
+
+                    if (!inputuser || inputuser != result.user) {
+                        res.sendStatus(403);
+                        return;
+                    }
+
                     fs.unlink(filepathcreater(result.file.filename), cb => { return });
                     col.remove(result);
                     db.saveDatabase();
@@ -151,6 +163,114 @@ export class Routes {
                     message: 'POST method is not supported on this URL, please use delete to delete individual image and then add it'
                 })
             })
+
+
+        /**
+        * Images per ID - support GET and DELETE operation
+        * 
+        * */
+        app.route('/images/user/:user')
+            /**
+             *          GET image by user id - Use the URL from images API to download the image
+             *              
+             */
+            /**
+                 *          GET image by user id - Use the URL from images API to download the image
+                 *              
+                 */
+
+            .get(async (req: Request, res: Response) => {
+                try {
+                    const col = await loadCollection(COLLECTION_NAME, db);
+                    const result = col.find({ 'user': req.params.user });
+
+                    if (!result) {
+                        res.sendStatus(404);
+                        return;
+                    }
+                    res.send(result);
+                } catch (err) {
+                    console.log(err);
+                    res.sendStatus(400);
+                }
+            })
+
+
+        /**
+        * increments like for a particular image
+        * 
+        * */
+        app.route('/image/:id/like')
+            /**
+                 *          POST like on image by  id - increment the like
+                 *              
+                 */
+
+            .post(async (req: Request, res: Response) => {
+                try {
+                    const col = await loadCollection(COLLECTION_NAME, db);
+                    const result = col.get(req.params.id);
+
+                    if (!result) {
+                        res.sendStatus(404);
+                        return;
+                    }
+
+                    result.likes++;
+                    col.update(result);
+                    db.saveDatabase();
+                    res.send(result);
+                } catch (err) {
+                    console.log(err);
+                    res.sendStatus(400);
+                }
+            })
+
+
+                    /**
+        * increments like for a particular image
+        * 
+        * */
+        app.route('/image/:id/comment')
+        /**
+             *          PUT image by  id - increment the like
+             *              
+             */
+
+        .post(async (req: Request, res: Response) => {
+            try {
+                const col = await loadCollection(COLLECTION_NAME, db);
+                const result = col.get(req.params.id);
+
+                if (!result) {
+                    res.sendStatus(404);
+                    return;
+                }
+
+                //console.log(req);
+
+                
+                var comment: Comments = new Comments(req.query.user, new Date(), req.query.comment);
+                const commCol = await loadCollection(COMMENTS_COL_NAME, commdb);
+                const data = commCol.insert(comment);
+
+                comment.commentId = data.$loki;
+
+                console.log(result);
+
+                result.commentIds.push(comment.commentId);
+               
+                col.update(result);
+                db.saveDatabase();
+                commdb.saveDatabase();
+                res.send(result);
+            } catch (err) {
+                console.log(err);
+                res.sendStatus(400);
+            }
+        })
+
+
 
     }
 }

@@ -33,6 +33,11 @@ paths:
           description: title of the image
           required: true
           type: string
+        - name: user
+          in: formData
+          description: user name
+          required: true
+          type: string
         - name: imageFile
           in: formData
           description: image file to upload

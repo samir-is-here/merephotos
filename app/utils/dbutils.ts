@@ -36,5 +36,9 @@ const diskStorage = multer.diskStorage({ destination: `${UPLOAD_PATH}/`, filenam
 const upload = multer({ dest: `${UPLOAD_PATH}/`, fileFilter: imageFilter, storage: diskStorage }).single('imageFile'); // multer configuration
 const db = new Loki(`${UPLOAD_PATH}/${DB_NAME}`, { persistenceMethod: 'fs' });
 
+const COMMENTS_DB_NAME = 'comments.json'
+const commdb = new Loki(`${UPLOAD_PATH}/${COMMENTS_DB_NAME}`, { persistenceMethod: 'fs' });
 
-export { imageFilter, loadCollection, filenamer, filepathcreater, upload, db };
+
+
+export { imageFilter, loadCollection, filenamer, filepathcreater, upload, db, commdb };
